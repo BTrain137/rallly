@@ -11,6 +11,11 @@ import { getEmailClient } from "@/utils/emails";
 const app = new Hono().basePath("/api/house-keeping/send-reminders");
 
 app.use("*", async (c, next) => {
+  // Allow bypassing auth in development for easier testing
+  if (process.env.NODE_ENV === "development" && !process.env.CRON_SECRET) {
+    return next();
+  }
+
   if (process.env.CRON_SECRET) {
     return bearerAuth({ token: process.env.CRON_SECRET })(c, next);
   }
