@@ -622,6 +622,8 @@ export const polls = router({
           disableComments: true,
           hideScores: true,
           requireParticipantEmail: true,
+          sendReminder: true,
+          reminderMinutesBefore: true,
           options: {
             select: {
               id: true,
@@ -1176,5 +1178,172 @@ export const polls = router({
           isGuest: ctx.user.isGuest,
         },
       });
+    }),
+  sendReminder: privateProcedure
+    .input(
+      z.object({
+        pollId: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const poll = await prisma.poll.findUnique({
+        where: {
+          id: input.pollId,
+        },
+        select: {
+          id: true,
+          title: true,
+          location: true,
+          sendReminder: true,
+          reminderMinutesBefore: true,
+          status: true,
+          scheduledEventId: true,
+          userId: true,
+          guestId: true,
+          spaceId: true,
+          user: {
+            select: {
+              name: true,
+            },
+          },
+          scheduledEvent: {
+            select: {
+              id: true,
+              start: true,
+              end: true,
+              allDay: true,
+              timeZone: true,
+              status: true,
+              invites: {
+                where: {
+                  status: { in: ["accepted", "tentative"] },
+                },
+                select: {
+                  id: true,
+                  inviteeName: true,
+                  inviteeEmail: true,
+                  inviteeTimeZone: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!poll) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Poll not found",
+        });
+      }
+
+      // Check if user can manage this poll
+      const canManage = await canUserManagePoll(ctx.user, poll);
+      if (!canManage) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have permission to manage this poll",
+        });
+      }
+
+      // Check if poll is finalized and has reminders enabled
+      if (poll.status !== "finalized") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Poll must be finalized to send reminders",
+        });
+      }
+
+      if (!poll.sendReminder || !poll.reminderMinutesBefore) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Reminders are not enabled for this poll",
+        });
+      }
+
+      if (!poll.scheduledEvent) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Poll does not have a scheduled event",
+        });
+      }
+
+      if (poll.scheduledEvent.status !== "confirmed") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Event must be confirmed to send reminders",
+        });
+      }
+
+      const sentReminders: string[] = [];
+      const errors: string[] = [];
+
+      // Send reminders to all accepted/tentative attendees
+      for (const invite of poll.scheduledEvent.invites) {
+        if (!invite.inviteeEmail) {
+          continue;
+        }
+
+        try {
+          const { date, day, dow, time } = formatEventDateTime({
+            start: poll.scheduledEvent.start,
+            end: poll.scheduledEvent.end,
+            allDay: poll.scheduledEvent.allDay,
+            timeZone: poll.scheduledEvent.timeZone,
+            inviteeTimeZone: invite.inviteeTimeZone ?? undefined,
+          });
+
+          // Format reminder time (e.g., "1 day", "2 hours", "30 minutes")
+          let reminderTimeText = "";
+          const minutes = poll.reminderMinutesBefore;
+          if (minutes >= 1440) {
+            const days = Math.floor(minutes / 1440);
+            reminderTimeText = `${days} ${days === 1 ? "day" : "days"}`;
+          } else if (minutes >= 60) {
+            const hours = Math.floor(minutes / 60);
+            reminderTimeText = `${hours} ${hours === 1 ? "hour" : "hours"}`;
+          } else {
+            reminderTimeText = `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+          }
+
+          await getEmailClient().sendTemplate("EventReminderEmail", {
+            to: invite.inviteeEmail,
+            props: {
+              pollUrl: absoluteUrl(`/invite/${poll.id}`),
+              title: poll.title,
+              hostName: poll.user?.name ?? "",
+              date,
+              day,
+              dow,
+              time,
+              location: poll.location ?? undefined,
+              reminderTime: reminderTimeText,
+            },
+          });
+
+          sentReminders.push(invite.inviteeEmail);
+        } catch (error) {
+          const errorMessage = `Failed to send reminder to ${invite.inviteeEmail}: ${error instanceof Error ? error.message : String(error)}`;
+          errors.push(errorMessage);
+          console.error(errorMessage, error);
+        }
+      }
+
+      if (errors.length > 0 && sentReminders.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to send reminders: ${errors.join(", ")}`,
+        });
+      }
+
+      return {
+        success: true,
+        sentReminders: sentReminders.length,
+        errors: errors.length,
+        details: {
+          sentReminders,
+          errors,
+        },
+      };
     }),
 });

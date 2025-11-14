@@ -1,12 +1,16 @@
 "use client";
 
+import { Button } from "@rallly/ui/button";
 import { Badge } from "@rallly/ui/badge";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, BellIcon } from "lucide-react";
+import { toast } from "@rallly/ui/sonner";
 import { AddToCalendarButton } from "@/components/add-to-calendar-button";
 import { ParticipantAvatarBar } from "@/components/participant-avatar-bar";
 import { Trans } from "@/components/trans";
 import { IfParticipantsVisible } from "@/components/visibility";
 import { usePoll } from "@/contexts/poll";
+import { useUser } from "@/components/user-provider";
+import { trpc } from "@/trpc/client";
 import { useDayjs } from "@/utils/dayjs";
 
 function FinalDate({ start }: { start: Date }) {
@@ -61,12 +65,38 @@ function Attendees() {
 export function ScheduledEvent() {
   const poll = usePoll();
   const { event } = poll;
-
+  const { ownsObject } = useUser();
+  const canManage = ownsObject(poll);
   const attendees = useAttendees();
+
+  const sendReminder = trpc.polls.sendReminder.useMutation({
+    onSuccess: (data) => {
+      toast.success(
+        <Trans
+          i18nKey="reminderSentSuccess"
+          defaults="Reminder sent to {count} attendee{plural}"
+          values={{
+            count: data.sentReminders,
+            plural: data.sentReminders === 1 ? "" : "s",
+          }}
+        />,
+      );
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   if (!event) {
     return null;
   }
+
+  const showReminderButton =
+    canManage &&
+    poll.status === "finalized" &&
+    poll.sendReminder &&
+    poll.reminderMinutesBefore &&
+    event.status === "confirmed";
 
   return (
     <>
@@ -102,6 +132,19 @@ export function ScheduledEvent() {
             <IfParticipantsVisible>
               <Attendees />
             </IfParticipantsVisible>
+            {showReminderButton && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  sendReminder.mutate({ pollId: poll.id });
+                }}
+                loading={sendReminder.isPending}
+              >
+                <BellIcon className="size-4" />
+                <Trans i18nKey="sendReminder" defaults="Send Reminder" />
+              </Button>
+            )}
             <AddToCalendarButton
               title={poll.title}
               description={poll.description ?? undefined}
