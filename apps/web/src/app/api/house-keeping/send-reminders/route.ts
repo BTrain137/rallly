@@ -32,11 +32,15 @@ app.use("*", async (c, next) => {
  * Sends reminder emails for events that are scheduled to start within
  * the reminder time window. This endpoint should be called periodically
  * (e.g., every 15 minutes) via a cron job.
+ *
+ * Query parameters:
+ *   - test=true: Send reminders for all events regardless of timing (for testing)
  */
 app.get("/", async (c) => {
   const now = dayjs();
   const sentReminders: string[] = [];
   const errors: string[] = [];
+  const testMode = c.req.query("test") === "true";
 
   try {
     // Find all finalized polls with reminders enabled that have scheduled events
@@ -95,11 +99,21 @@ app.get("/", async (c) => {
         "minute"
       );
 
-      // Check if we're within a 15-minute window before the reminder should be sent
-      // This allows for some flexibility in cron job timing
+      // Check if we're within a 15-minute window before or after the reminder should be sent
+      // This allows for some flexibility in cron job timing and testing
       const timeUntilReminder = reminderTime.diff(now, "minute");
+      const eventHasNotStarted = eventStart.isAfter(now);
 
-      if (timeUntilReminder >= 0 && timeUntilReminder <= 15) {
+      // Send reminders if:
+      // 1. In test mode: send for any event that hasn't started yet (or started within last hour for testing)
+      // 2. Normal mode: reminder is scheduled within the next 15 minutes (normal operation)
+      // 3. Normal mode: reminder was scheduled in the past 15 minutes (missed/catch-up)
+      const shouldSend = testMode
+        ? eventHasNotStarted || eventStart.diff(now, "hour") >= -1
+        : (timeUntilReminder >= 0 && timeUntilReminder <= 15) ||
+          (timeUntilReminder < 0 && timeUntilReminder >= -15);
+
+      if (shouldSend && poll.scheduledEvent.invites.length > 0) {
         // Send reminders to all accepted/tentative attendees
         for (const invite of poll.scheduledEvent.invites) {
           if (!invite.inviteeEmail) {
