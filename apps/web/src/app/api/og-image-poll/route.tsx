@@ -12,11 +12,11 @@ const schema = z.object({
 export const runtime = "edge";
 
 const regularFont = fetch(
-  new URL("/public/static/fonts/inter-regular.ttf", import.meta.url),
+  new URL("../../../../public/static/fonts/inter-regular.ttf", import.meta.url),
 ).then((res) => res.arrayBuffer());
 
 const boldFont = fetch(
-  new URL("/public/static/fonts/inter-bold.ttf", import.meta.url),
+  new URL("../../../../public/static/fonts/inter-bold.ttf", import.meta.url),
 ).then((res) => res.arrayBuffer());
 
 export async function GET(req: NextRequest) {

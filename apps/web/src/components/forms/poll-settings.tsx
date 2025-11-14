@@ -9,7 +9,7 @@ import {
 } from "@rallly/ui/card";
 import { FormField } from "@rallly/ui/form";
 import { Switch } from "@rallly/ui/switch";
-import { AtSignIcon, EyeIcon, MessageCircleIcon, VoteIcon } from "lucide-react";
+import { AtSignIcon, BellIcon, EyeIcon, MessageCircleIcon, VoteIcon } from "lucide-react";
 import type React from "react";
 import { useFormContext } from "react-hook-form";
 import { Trans } from "react-i18next";
@@ -23,6 +23,8 @@ export type PollSettingsFormData = {
   hideParticipants: boolean;
   hideScores: boolean;
   disableComments: boolean;
+  sendReminder: boolean;
+  reminderMinutesBefore: number | null;
 };
 
 const SettingContent = ({ children }: React.PropsWithChildren) => {
@@ -200,6 +202,35 @@ export const PollSettingsForm = ({ children }: React.PropsWithChildren) => {
                       });
                     } else {
                       field.onChange(checked);
+                    }
+                  }}
+                />
+              </Setting>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="sendReminder"
+            render={({ field }) => (
+              <Setting>
+                <BellIcon className="size-5 shrink-0 translate-y-0.5" />
+                <SettingContent>
+                  <SettingTitle htmlFor={field.name}>
+                    <Trans
+                      i18nKey="sendReminderLabel"
+                      defaults="Send reminder to attendees"
+                    />
+                  </SettingTitle>
+                </SettingContent>
+                <Switch
+                  id={field.name}
+                  checked={!!field.value}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked);
+                    if (!checked) {
+                      form.setValue("reminderMinutesBefore", null);
+                    } else if (!form.getValues("reminderMinutesBefore")) {
+                      form.setValue("reminderMinutesBefore", 1440);
                     }
                   }}
                 />

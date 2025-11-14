@@ -54,7 +54,7 @@ export const polls = router({
         member: z.string().optional(),
         cursor: z.number().optional().default(1),
         limit: z.number().default(20),
-      }),
+      })
     )
     .query(async ({ input }) => {
       const { cursor: page, limit: pageSize, status, search, member } = input;
@@ -96,7 +96,7 @@ export const polls = router({
         acc[status] = _count.status;
         return acc;
       },
-      {} as Record<PollStatus, number>,
+      {} as Record<PollStatus, number>
     );
   }),
   /** @deprecated */
@@ -106,7 +106,7 @@ export const polls = router({
         status: z.enum(["all", "live", "paused", "finalized"]),
         cursor: z.string().optional(),
         limit: z.number(),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
       const { cursor, limit, status } = input;
@@ -177,13 +177,15 @@ export const polls = router({
         hideScores: z.boolean().optional(),
         disableComments: z.boolean().optional(),
         requireParticipantEmail: z.boolean().optional(),
+        sendReminder: z.boolean().optional(),
+        reminderMinutesBefore: z.number().nullable().optional(),
         options: z
           .object({
             startDate: z.string(),
             endDate: z.string().optional(),
           })
           .array(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .use(createRateLimitMiddleware("create_poll", 20, "1 h"))
@@ -262,7 +264,7 @@ export const polls = router({
                 duration: option.endDate
                   ? dayjs(option.endDate).diff(
                       dayjs(option.startDate),
-                      "minute",
+                      "minute"
                     )
                   : 0,
               })),
@@ -272,6 +274,8 @@ export const polls = router({
           disableComments: input.disableComments,
           hideScores: input.hideScores,
           requireParticipantEmail: input.requireParticipantEmail,
+          sendReminder: input.sendReminder ?? false,
+          reminderMinutesBefore: input.reminderMinutesBefore ?? null,
           spaceId,
         },
       });
@@ -336,7 +340,7 @@ export const polls = router({
         disableComments: z.boolean().optional(),
         hideScores: z.boolean().optional(),
         requireParticipantEmail: z.boolean().optional(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .use(createRateLimitMiddleware("update_poll", 10, "1 m"))
@@ -511,7 +515,7 @@ export const polls = router({
     .input(
       z.object({
         urlId: z.string(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .mutation(async ({ input: { urlId }, ctx }) => {
@@ -538,7 +542,7 @@ export const polls = router({
     .input(
       z.object({
         pollId: z.string(),
-      }),
+      })
     )
     .query(async ({ input: { pollId } }) => {
       return await prisma.watcher.findMany({
@@ -600,7 +604,7 @@ export const polls = router({
       z.object({
         urlId: z.string(),
         adminToken: z.string().optional(),
-      }),
+      })
     )
     .query(async ({ input, ctx }) => {
       const res = await prisma.poll.findUnique({
@@ -685,7 +689,7 @@ export const polls = router({
               ? 0
               : dayjs(res.scheduledEvent.end).diff(
                   dayjs(res.scheduledEvent.start),
-                  "minute",
+                  "minute"
                 ),
             attendees: res.scheduledEvent.invites
               .map((invite) => ({
@@ -695,7 +699,7 @@ export const polls = router({
               }))
               .filter(
                 (invite) =>
-                  invite.status === "accepted" || invite.status === "tentative",
+                  invite.status === "accepted" || invite.status === "tentative"
               ),
             status: res.scheduledEvent.status,
           }
@@ -717,7 +721,7 @@ export const polls = router({
         pollId: z.string(),
         optionId: z.string(),
         notify: z.enum(["none", "all", "attendees"]),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       const poll = await prisma.poll.findUnique({
@@ -732,6 +736,8 @@ export const polls = router({
           location: true,
           description: true,
           spaceId: true,
+          sendReminder: true,
+          reminderMinutesBefore: true,
           user: {
             select: {
               name: true,
@@ -815,7 +821,7 @@ export const polls = router({
       const uid = `${eventId}@rallly.co`;
 
       const attendees = poll.participants.filter((p) =>
-        p.votes.some((v) => v.optionId === input.optionId && v.type !== "no"),
+        p.votes.some((v) => v.optionId === input.optionId && v.type !== "no")
       );
 
       const icsAttendees = attendees
@@ -965,8 +971,8 @@ export const polls = router({
             attendees: poll.participants
               .filter((p) =>
                 p.votes.some(
-                  (v) => v.optionId === input.optionId && v.type !== "no",
-                ),
+                  (v) => v.optionId === input.optionId && v.type !== "no"
+                )
               )
               .map((p) => p.name),
             date,
@@ -1003,7 +1009,7 @@ export const polls = router({
                 time,
               },
               attachments: [{ filename: "event.ics", content: event.value }],
-            },
+            }
           );
         }
 
@@ -1025,7 +1031,7 @@ export const polls = router({
     .input(
       z.object({
         pollId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       await prisma.$transaction(async () => {
@@ -1059,7 +1065,7 @@ export const polls = router({
     .input(
       z.object({
         pollId: z.string(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .mutation(async ({ input, ctx }) => {
@@ -1086,7 +1092,7 @@ export const polls = router({
       z.object({
         pollId: z.string(),
         newTitle: z.string().min(1),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       const poll = await prisma.poll.findUnique({
@@ -1148,7 +1154,7 @@ export const polls = router({
     .input(
       z.object({
         pollId: z.string(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .mutation(async ({ input, ctx }) => {
