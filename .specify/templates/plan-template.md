@@ -31,7 +31,15 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify compliance with Rallly Constitution principles:
+
+- **Code Clarity**: Is the proposed approach easy to read and understand? Are naming conventions clear?
+- **Simplicity**: Is this the simplest solution that meets requirements? Can complexity be reduced?
+- **Documentation**: Will the implementation include sufficient comments for newcomers?
+- **Beginner-Friendly**: Is the approach accessible to developers new to full-stack development?
+- **File Structure**: Can this be implemented with minimal file splitting? Are separate files truly necessary?
+
+If any principle cannot be followed, document the justification in the Complexity Tracking section below.
 
 ## Project Structure
 

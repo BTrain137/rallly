@@ -1,50 +1,89 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+Version: 1.0.0 (initial creation)
+Ratified: 2025-11-17
+Last Amended: 2025-11-17
+
+Principles Added:
+- I. Code Clarity and Readability
+- II. Simplicity First
+- III. Comprehensive Documentation
+- IV. Beginner-Friendly Approach
+- V. Minimal File Structure
+
+Sections Added:
+- Development Workflow (code review and documentation requirements)
+
+Templates Status:
+✅ plan-template.md - Updated Constitution Check section with specific principle checks
+✅ spec-template.md - No changes needed (already focuses on clarity)
+✅ tasks-template.md - No changes needed (structure already supports simplicity)
+⚠️ No command files found in .specify/templates/commands/ - may need manual review if added later
+
+Follow-up TODOs:
+- None
+-->
+
+# Rallly Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Code Clarity and Readability
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Code MUST be written with clarity as the primary goal. Variable names, function names, and structure MUST be self-explanatory. Complex logic MUST be broken down into smaller, understandable pieces. Code should read like well-written prose, making the intent obvious to anyone reading it.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: Clear code reduces cognitive load, speeds up onboarding, and minimizes bugs. When code is easy to read, it's easier to maintain, debug, and extend.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Simplicity First
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+Always choose the simplest solution that meets the requirements. Avoid premature optimization, over-engineering, and unnecessary abstractions. When multiple approaches exist, prefer the one that is easiest to understand and maintain. Complexity MUST be justified with clear reasoning.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: Simple code is easier to understand, test, and modify. It reduces the learning curve for newcomers and minimizes the chance of introducing bugs during maintenance.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Comprehensive Documentation
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Code MUST include regular, meaningful comments that explain the "why" behind decisions, not just the "what". Complex algorithms, business logic, and non-obvious behavior MUST be documented. Comments should assume the reader is new to the codebase and may not understand the context.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: Comments serve as a learning tool for newcomers and a memory aid for future maintainers. Well-documented code reduces the time needed to understand functionality and prevents knowledge loss.
+
+### IV. Beginner-Friendly Approach
+
+All code MUST be written assuming the audience includes relative newcomers to full-stack development. Avoid jargon without explanation, use common patterns over clever solutions, and structure code to be approachable. When advanced techniques are necessary, they MUST be clearly documented with explanations.
+
+**Rationale**: A beginner-friendly codebase is more accessible to contributors, reduces onboarding time, and creates a more inclusive development environment. Code that newcomers can understand is also easier for experienced developers to maintain.
+
+### V. Minimal File Structure
+
+Where possible, avoid creating excessive files. Prefer single files that contain related functionality over splitting into many small files. Only create separate files when there is a clear benefit (e.g., reusability, testability, or when a file becomes genuinely unwieldy). File organization MUST prioritize simplicity and ease of navigation.
+
+**Rationale**: Fewer files mean less cognitive overhead when navigating the codebase. Single files with related functionality are easier to understand in context and reduce the need to jump between multiple files to understand a feature.
+
+## Development Workflow
+
+### Code Review Requirements
+
+All code reviews MUST verify compliance with these principles. Reviewers should ask:
+- Is this code easy to read and understand?
+- Is this the simplest solution that works?
+- Are there sufficient comments for a newcomer to understand?
+- Could this be simplified further without losing functionality?
+- Are files organized in the simplest way possible?
+
+### Documentation Standards
+
+- Complex functions MUST have JSDoc/TSDoc comments explaining purpose, parameters, and return values
+- Business logic MUST include inline comments explaining the reasoning
+- Non-obvious code patterns MUST be documented with examples or references
+- File headers SHOULD describe the file's purpose and main responsibilities
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other coding practices and guidelines. All PRs and code reviews MUST verify compliance with these principles. When a principle cannot be followed (e.g., performance requirements demand complexity), the deviation MUST be documented with clear justification in the code comments and PR description.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Amendments to this constitution require:
+1. Documentation of the proposed change and rationale
+2. Review and approval process
+3. Update to this document with version increment
+4. Propagation of changes to dependent templates and documentation
+
+**Version**: 1.0.0 | **Ratified**: 2025-11-17 | **Last Amended**: 2025-11-17
