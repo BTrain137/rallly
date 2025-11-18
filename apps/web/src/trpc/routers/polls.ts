@@ -11,6 +11,7 @@ import { getCurrentUserSpace } from "@/auth/data";
 import { moderateContent } from "@/features/moderation";
 import { getPolls } from "@/features/poll/data";
 import { canUserManagePoll } from "@/features/poll/helpers";
+import { hasPollAdminAccess } from "@/features/poll/query";
 import { formatEventDateTime } from "@/features/scheduled-event/utils";
 import { getEmailClient } from "@/utils/emails";
 import { createIcsEvent } from "@/utils/ics";
@@ -171,8 +172,8 @@ export const polls = router({
       z.object({
         title: z.string().trim().min(1),
         timeZone: z.string().optional(),
-        location: z.string().optional(),
-        description: z.string().optional(),
+        location: z.string().trim().optional(),
+        description: z.string().trim().optional(),
         hideParticipants: z.boolean().optional(),
         hideScores: z.boolean().optional(),
         disableComments: z.boolean().optional(),
@@ -213,6 +214,9 @@ export const polls = router({
       return next();
     })
     .mutation(async ({ ctx, input }) => {
+      const title = input.title;
+      const location = input.location || undefined;
+      const description = input.description || undefined;
       const adminToken = nanoid();
       const participantUrlId = nanoid();
       const pollId = nanoid();
@@ -239,10 +243,10 @@ export const polls = router({
         },
         data: {
           id: pollId,
-          title: input.title,
+          title,
           timeZone: input.timeZone,
-          location: input.location,
-          description: input.description,
+          location,
+          description,
           adminUrlId: adminToken,
           participantUrlId,
           ...(ctx.user.isLegacyGuest
@@ -311,8 +315,8 @@ export const polls = router({
         properties: {
           title: poll.title,
           optionCount: poll.options.length,
-          hasLocation: !!input.location,
-          hasDescription: !!input.description,
+          hasLocation: !!location,
+          hasDescription: !!description,
           timezone: input.timeZone,
           disableCommnets: poll.disableComments,
           hideParticipants: poll.hideParticipants,
@@ -330,10 +334,10 @@ export const polls = router({
     .input(
       z.object({
         urlId: z.string(),
-        title: z.string().optional(),
+        title: z.string().trim().optional(),
         timeZone: z.string().optional(),
-        location: z.string().optional(),
-        description: z.string().optional(),
+        location: z.string().trim().optional(),
+        description: z.string().trim().optional(),
         optionsToDelete: z.string().array().optional(),
         optionsToAdd: z.string().array().optional(),
         hideParticipants: z.boolean().optional(),
@@ -557,6 +561,15 @@ export const polls = router({
   watch: privateProcedure
     .input(z.object({ pollId: z.string() }))
     .mutation(async ({ input, ctx }) => {
+      const hasAccess = await hasPollAdminAccess(input.pollId, ctx.user.id);
+
+      if (!hasAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not allowed to watch this poll",
+        });
+      }
+
       await prisma.watcher.create({
         data: {
           pollId: input.pollId,
@@ -726,6 +739,15 @@ export const polls = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const hasAccess = await hasPollAdminAccess(input.pollId, ctx.user.id);
+
+      if (!hasAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not allowed to book a date for this poll",
+        });
+      }
+
       const poll = await prisma.poll.findUnique({
         where: {
           id: input.pollId,
@@ -1036,6 +1058,15 @@ export const polls = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const hasAccess = await hasPollAdminAccess(input.pollId, ctx.user.id);
+
+      if (!hasAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not allowed to reopen this poll",
+        });
+      }
+
       await prisma.$transaction(async () => {
         const poll = await prisma.poll.update({
           where: {
@@ -1071,6 +1102,15 @@ export const polls = router({
     )
     .use(requireUserMiddleware)
     .mutation(async ({ input, ctx }) => {
+      const hasAccess = await hasPollAdminAccess(input.pollId, ctx.user.id);
+
+      if (!hasAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not allowed to pause this poll",
+        });
+      }
+
       await prisma.poll.update({
         where: {
           id: input.pollId,
@@ -1097,6 +1137,15 @@ export const polls = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const hasAccess = await hasPollAdminAccess(input.pollId, ctx.user.id);
+
+      if (!hasAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not allowed to duplicate this poll",
+        });
+      }
+
       const poll = await prisma.poll.findUnique({
         where: {
           id: input.pollId,
@@ -1160,6 +1209,15 @@ export const polls = router({
     )
     .use(requireUserMiddleware)
     .mutation(async ({ input, ctx }) => {
+      const hasAccess = await hasPollAdminAccess(input.pollId, ctx.user.id);
+
+      if (!hasAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not allowed to resume this poll",
+        });
+      }
+
       await prisma.poll.update({
         where: {
           id: input.pollId,

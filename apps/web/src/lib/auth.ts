@@ -48,6 +48,8 @@ if (env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_DISCOVERY_URL) {
           clientId: env.OIDC_CLIENT_ID,
           clientSecret: env.OIDC_CLIENT_SECRET,
           scopes: ["openid", "profile", "email"],
+          redirectURI: absoluteUrl("/api/auth/callback/oidc"),
+          pkce: true,
           mapProfileToUser(profile) {
             return {
               name: getValueByPath(profile, env.OIDC_NAME_CLAIM_PATH) as string,
@@ -148,6 +150,7 @@ export const authLib = betterAuth({
         ? {
             clientId: env.GOOGLE_CLIENT_ID,
             clientSecret: env.GOOGLE_CLIENT_SECRET,
+            redirectURI: absoluteUrl("/api/auth/callback/google"),
           }
         : undefined,
     microsoft:
@@ -156,6 +159,7 @@ export const authLib = betterAuth({
             tenantId: env.MICROSOFT_TENANT_ID,
             clientId: env.MICROSOFT_CLIENT_ID,
             clientSecret: env.MICROSOFT_CLIENT_SECRET,
+            redirectURI: absoluteUrl("/api/auth/callback/microsoft-entra-id"),
           }
         : undefined,
   },
