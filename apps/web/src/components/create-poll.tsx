@@ -9,8 +9,8 @@ import {
 } from "@rallly/ui/card";
 import { Form } from "@rallly/ui/form";
 import { toast } from "@rallly/ui/sonner";
-import { useRouter } from "next/navigation";
-import type React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import * as React from "react";
 import { useForm } from "react-hook-form";
 import useFormPersist from "react-hook-form-persist";
 import { useUnmount } from "react-use";
@@ -36,9 +36,22 @@ export interface CreatePollPageProps {
   view?: "week" | "month";
 }
 
+/**
+ * CreatePoll component that allows users to create new polls.
+ * Supports pre-filling form data from duplicate poll workflow via sessionStorage.
+ * When a duplicate parameter is present in the URL, it checks sessionStorage for
+ * pre-filled data and uses that instead of the default form persistence.
+ */
 export const CreatePoll: React.FunctionComponent = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { createGuestIfNeeded } = useUser();
+
+  // Check if this is a duplicate flow
+  const duplicatePollId = searchParams.get("duplicate");
+
+  // Initialize form with default values
+  // These will be overridden if duplicate data exists
   const form = useForm<NewEventData>({
     defaultValues: {
       title: "",
@@ -53,10 +66,50 @@ export const CreatePoll: React.FunctionComponent = () => {
     },
   });
 
-  const { clear } = useFormPersist("new-poll", {
+  // Form persistence for draft saving (localStorage)
+  // This is only used if no duplicate data exists
+  // If duplicate data exists, we skip persistence to let duplicate data take precedence
+  const formPersistKey = duplicatePollId ? "disabled" : "new-poll";
+  const { clear } = useFormPersist(formPersistKey, {
     watch: form.watch,
     setValue: form.setValue,
   });
+
+  // Handle duplicate data pre-fill on component mount
+  React.useEffect(() => {
+    if (!duplicatePollId) {
+      // No duplicate parameter - use normal form persistence
+      return;
+    }
+
+    try {
+      // Check sessionStorage for duplicate poll data
+      // Key pattern: duplicate-poll-{pollId}
+      const storageKey = `duplicate-poll-${duplicatePollId}`;
+      const duplicateDataStr = sessionStorage.getItem(storageKey);
+
+      if (duplicateDataStr) {
+        // Parse the stored form data
+        const duplicateData = JSON.parse(duplicateDataStr) as NewEventData;
+
+        // Pre-fill form with duplicate data
+        // Reset form first to clear any existing values
+        form.reset(duplicateData);
+
+        // Clear sessionStorage after pre-fill
+        // This ensures the data is only used once
+        sessionStorage.removeItem(storageKey);
+      }
+    } catch (error) {
+      // Handle errors gracefully - if sessionStorage read fails, fall back to normal form
+      // This handles edge cases like:
+      // - SessionStorage quota exceeded (very unlikely but possible)
+      // - Invalid JSON data
+      // - Browser security restrictions
+      console.error("Failed to load duplicate poll data:", error);
+      // Could show an error toast here if needed
+    }
+  }, [duplicatePollId, form]);
 
   useUnmount(clear);
 
