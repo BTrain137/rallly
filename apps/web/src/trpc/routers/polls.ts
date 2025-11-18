@@ -54,7 +54,7 @@ export const polls = router({
         member: z.string().optional(),
         cursor: z.number().optional().default(1),
         limit: z.number().default(20),
-      }),
+      })
     )
     .query(async ({ input }) => {
       const { cursor: page, limit: pageSize, status, search, member } = input;
@@ -96,7 +96,7 @@ export const polls = router({
         acc[status] = _count.status;
         return acc;
       },
-      {} as Record<PollStatus, number>,
+      {} as Record<PollStatus, number>
     );
   }),
   /** @deprecated */
@@ -106,7 +106,7 @@ export const polls = router({
         status: z.enum(["all", "live", "paused", "finalized"]),
         cursor: z.string().optional(),
         limit: z.number(),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
       const { cursor, limit, status } = input;
@@ -177,13 +177,15 @@ export const polls = router({
         hideScores: z.boolean().optional(),
         disableComments: z.boolean().optional(),
         requireParticipantEmail: z.boolean().optional(),
+        sendReminder: z.boolean().optional(),
+        reminderMinutesBefore: z.number().nullable().optional(),
         options: z
           .object({
             startDate: z.string(),
             endDate: z.string().optional(),
           })
           .array(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .use(createRateLimitMiddleware("create_poll", 20, "1 h"))
@@ -262,7 +264,7 @@ export const polls = router({
                 duration: option.endDate
                   ? dayjs(option.endDate).diff(
                       dayjs(option.startDate),
-                      "minute",
+                      "minute"
                     )
                   : 0,
               })),
@@ -272,6 +274,8 @@ export const polls = router({
           disableComments: input.disableComments,
           hideScores: input.hideScores,
           requireParticipantEmail: input.requireParticipantEmail,
+          sendReminder: input.sendReminder ?? false,
+          reminderMinutesBefore: input.reminderMinutesBefore ?? null,
           spaceId,
         },
       });
@@ -336,7 +340,7 @@ export const polls = router({
         disableComments: z.boolean().optional(),
         hideScores: z.boolean().optional(),
         requireParticipantEmail: z.boolean().optional(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .use(createRateLimitMiddleware("update_poll", 10, "1 m"))
@@ -511,7 +515,7 @@ export const polls = router({
     .input(
       z.object({
         urlId: z.string(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .mutation(async ({ input: { urlId }, ctx }) => {
@@ -538,7 +542,7 @@ export const polls = router({
     .input(
       z.object({
         pollId: z.string(),
-      }),
+      })
     )
     .query(async ({ input: { pollId } }) => {
       return await prisma.watcher.findMany({
@@ -600,7 +604,7 @@ export const polls = router({
       z.object({
         urlId: z.string(),
         adminToken: z.string().optional(),
-      }),
+      })
     )
     .query(async ({ input, ctx }) => {
       const res = await prisma.poll.findUnique({
@@ -618,6 +622,8 @@ export const polls = router({
           disableComments: true,
           hideScores: true,
           requireParticipantEmail: true,
+          sendReminder: true,
+          reminderMinutesBefore: true,
           options: {
             select: {
               id: true,
@@ -685,7 +691,7 @@ export const polls = router({
               ? 0
               : dayjs(res.scheduledEvent.end).diff(
                   dayjs(res.scheduledEvent.start),
-                  "minute",
+                  "minute"
                 ),
             attendees: res.scheduledEvent.invites
               .map((invite) => ({
@@ -695,7 +701,7 @@ export const polls = router({
               }))
               .filter(
                 (invite) =>
-                  invite.status === "accepted" || invite.status === "tentative",
+                  invite.status === "accepted" || invite.status === "tentative"
               ),
             status: res.scheduledEvent.status,
           }
@@ -717,7 +723,7 @@ export const polls = router({
         pollId: z.string(),
         optionId: z.string(),
         notify: z.enum(["none", "all", "attendees"]),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       const poll = await prisma.poll.findUnique({
@@ -732,6 +738,8 @@ export const polls = router({
           location: true,
           description: true,
           spaceId: true,
+          sendReminder: true,
+          reminderMinutesBefore: true,
           user: {
             select: {
               name: true,
@@ -815,7 +823,7 @@ export const polls = router({
       const uid = `${eventId}@rallly.co`;
 
       const attendees = poll.participants.filter((p) =>
-        p.votes.some((v) => v.optionId === input.optionId && v.type !== "no"),
+        p.votes.some((v) => v.optionId === input.optionId && v.type !== "no")
       );
 
       const icsAttendees = attendees
@@ -965,8 +973,8 @@ export const polls = router({
             attendees: poll.participants
               .filter((p) =>
                 p.votes.some(
-                  (v) => v.optionId === input.optionId && v.type !== "no",
-                ),
+                  (v) => v.optionId === input.optionId && v.type !== "no"
+                )
               )
               .map((p) => p.name),
             date,
@@ -1003,7 +1011,7 @@ export const polls = router({
                 time,
               },
               attachments: [{ filename: "event.ics", content: event.value }],
-            },
+            }
           );
         }
 
@@ -1025,7 +1033,7 @@ export const polls = router({
     .input(
       z.object({
         pollId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       await prisma.$transaction(async () => {
@@ -1059,7 +1067,7 @@ export const polls = router({
     .input(
       z.object({
         pollId: z.string(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .mutation(async ({ input, ctx }) => {
@@ -1086,7 +1094,7 @@ export const polls = router({
       z.object({
         pollId: z.string(),
         newTitle: z.string().min(1),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       const poll = await prisma.poll.findUnique({
@@ -1148,7 +1156,7 @@ export const polls = router({
     .input(
       z.object({
         pollId: z.string(),
-      }),
+      })
     )
     .use(requireUserMiddleware)
     .mutation(async ({ input, ctx }) => {
@@ -1170,5 +1178,172 @@ export const polls = router({
           isGuest: ctx.user.isGuest,
         },
       });
+    }),
+  sendReminder: privateProcedure
+    .input(
+      z.object({
+        pollId: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const poll = await prisma.poll.findUnique({
+        where: {
+          id: input.pollId,
+        },
+        select: {
+          id: true,
+          title: true,
+          location: true,
+          sendReminder: true,
+          reminderMinutesBefore: true,
+          status: true,
+          scheduledEventId: true,
+          userId: true,
+          guestId: true,
+          spaceId: true,
+          user: {
+            select: {
+              name: true,
+            },
+          },
+          scheduledEvent: {
+            select: {
+              id: true,
+              start: true,
+              end: true,
+              allDay: true,
+              timeZone: true,
+              status: true,
+              invites: {
+                where: {
+                  status: { in: ["accepted", "tentative"] },
+                },
+                select: {
+                  id: true,
+                  inviteeName: true,
+                  inviteeEmail: true,
+                  inviteeTimeZone: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!poll) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Poll not found",
+        });
+      }
+
+      // Check if user can manage this poll
+      const canManage = await canUserManagePoll(ctx.user, poll);
+      if (!canManage) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have permission to manage this poll",
+        });
+      }
+
+      // Check if poll is finalized and has reminders enabled
+      if (poll.status !== "finalized") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Poll must be finalized to send reminders",
+        });
+      }
+
+      if (!poll.sendReminder || !poll.reminderMinutesBefore) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Reminders are not enabled for this poll",
+        });
+      }
+
+      if (!poll.scheduledEvent) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Poll does not have a scheduled event",
+        });
+      }
+
+      if (poll.scheduledEvent.status !== "confirmed") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Event must be confirmed to send reminders",
+        });
+      }
+
+      const sentReminders: string[] = [];
+      const errors: string[] = [];
+
+      // Send reminders to all accepted/tentative attendees
+      for (const invite of poll.scheduledEvent.invites) {
+        if (!invite.inviteeEmail) {
+          continue;
+        }
+
+        try {
+          const { date, day, dow, time } = formatEventDateTime({
+            start: poll.scheduledEvent.start,
+            end: poll.scheduledEvent.end,
+            allDay: poll.scheduledEvent.allDay,
+            timeZone: poll.scheduledEvent.timeZone,
+            inviteeTimeZone: invite.inviteeTimeZone ?? undefined,
+          });
+
+          // Format reminder time (e.g., "1 day", "2 hours", "30 minutes")
+          let reminderTimeText = "";
+          const minutes = poll.reminderMinutesBefore;
+          if (minutes >= 1440) {
+            const days = Math.floor(minutes / 1440);
+            reminderTimeText = `${days} ${days === 1 ? "day" : "days"}`;
+          } else if (minutes >= 60) {
+            const hours = Math.floor(minutes / 60);
+            reminderTimeText = `${hours} ${hours === 1 ? "hour" : "hours"}`;
+          } else {
+            reminderTimeText = `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+          }
+
+          await getEmailClient().sendTemplate("EventReminderEmail", {
+            to: invite.inviteeEmail,
+            props: {
+              pollUrl: absoluteUrl(`/invite/${poll.id}`),
+              title: poll.title,
+              hostName: poll.user?.name ?? "",
+              date,
+              day,
+              dow,
+              time,
+              location: poll.location ?? undefined,
+              reminderTime: reminderTimeText,
+            },
+          });
+
+          sentReminders.push(invite.inviteeEmail);
+        } catch (error) {
+          const errorMessage = `Failed to send reminder to ${invite.inviteeEmail}: ${error instanceof Error ? error.message : String(error)}`;
+          errors.push(errorMessage);
+          console.error(errorMessage, error);
+        }
+      }
+
+      if (errors.length > 0 && sentReminders.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to send reminders: ${errors.join(", ")}`,
+        });
+      }
+
+      return {
+        success: true,
+        sentReminders: sentReminders.length,
+        errors: errors.length,
+        details: {
+          sentReminders,
+          errors,
+        },
+      };
     }),
 });

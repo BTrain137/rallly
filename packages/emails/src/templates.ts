@@ -1,6 +1,7 @@
 import { AbandonedCheckoutEmail } from "./templates/abandoned-checkout";
 import { ChangeEmailRequest } from "./templates/change-email-request";
 import { EventCanceledEmail } from "./templates/event-canceled";
+import { EventReminderEmail } from "./templates/event-reminder";
 import { FinalizeHostEmail } from "./templates/finalized-host";
 import { FinalizeParticipantEmail } from "./templates/finalized-participant";
 import { LicenseKeyEmail } from "./templates/license-key";
@@ -27,6 +28,7 @@ const templates = {
   LicenseKeyEmail,
   EventCanceledEmail,
   SpaceInviteEmail,
+  EventReminderEmail,
 };
 
 export const emailTemplates = Object.keys(templates) as TemplateName[];
