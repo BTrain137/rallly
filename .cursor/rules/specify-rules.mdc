@@ -1,0 +1,29 @@
+# rallly Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2025-11-17
+
+## Active Technologies
+
+- TypeScript 5.x, React 18.x, Next.js 14.x (App Router) + RPC, React Hook Form, Prisma, Next.js, TailwindCSS (001-duplicate-polls)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+npm test && npm run lint
+
+## Code Style
+
+TypeScript 5.x, React 18.x, Next.js 14.x (App Router): Follow standard conventions
+
+## Recent Changes
+
+- 001-duplicate-polls: Added TypeScript 5.x, React 18.x, Next.js 14.x (App Router) + RPC, React Hook Form, Prisma, Next.js, TailwindCSS
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->
