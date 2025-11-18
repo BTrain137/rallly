@@ -20,4 +20,5 @@
   "typescript.tsserver.trace": "messages",
   "references.preferredLocation": "view",
   "editor.defaultFormatter": "biomejs.biome",
+  "specstory.cloudSync.enabled": "always"
 }
